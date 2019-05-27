@@ -16,12 +16,19 @@ class MetaDeserializer
      * @param object $dest
      * @param string $property
      * @throws MetaDeserializerException
+     * @throws \ReflectionException
      */
     private function deserializePropertyViaMethod($src, object $dest, string $property) : void
     {
         $method = $property . $this->methodSuffix;
-		if (method_exists($dest, $method)) $dest->$method($src, $property);
-		else			                   $this->deserializeProperty($src, $dest, $property);
+		if (method_exists($dest, $method)) {
+            $m = new \ReflectionMethod($dest, $method);
+            $m->setAccessible(true);
+            $m->invokeArgs($dest, [ $src, $property ]);
+        }
+		else {
+            $this->deserializeProperty($src, $dest, $property);
+        }
     }
 
     protected function getPropertyType(object $obj, string $property) : ?string

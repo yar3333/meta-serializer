@@ -52,7 +52,7 @@ class MetaDeserializer
      * @param string $property
      * @throws MetaDeserializerException
      */
-    private function deserializeProperty($src, object $dest, string $property) : void
+    protected function deserializeProperty($src, object $dest, string $property) : void
     {
         try {
             if (!array_key_exists($property, $src)) $this->noValueProvided($src, $dest, $property);
@@ -118,7 +118,7 @@ class MetaDeserializer
                 return (int)$value;
         }
 
-        return $this->deserializeObject($this->getFullClassName($type, $parentClass), $value);
+        return $this->deserializeObject($value, $this->getFullClassName($type, $parentClass));
     }
 
     private function getFullClassName(string $type, ?string $parentClass) {
@@ -168,9 +168,17 @@ class MetaDeserializer
         return $this->deserializeValueNotNullableType($value, $type, $parentClass);
     }
 
-    function deserializeObject(string $class, array $src, array $properties=null) : object
+    /**
+     * @param array $src
+     * @param string|object $class_or_object
+     * @param string[] $properties
+     * @return object
+     * @throws MetaDeserializerException
+     * @throws \ReflectionException
+     */
+    function deserializeObject(array $src, $class_or_object, array $properties=null) : object
     {
-		$dest = $this->createObject($class);
+		$dest = is_string($class_or_object) ? $this->createObject($class_or_object) : $class_or_object;
 
         if ($properties === null) $properties = array_keys(get_object_vars($dest));
 

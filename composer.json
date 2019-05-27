@@ -1,0 +1,14 @@
+{
+  "name": "meta-serializer/meta-serializer",
+  "type": "library",
+  "description": "MetaSerializer php library.",
+  "version": "1.0.0",
+  "require": {
+    "php": ">=7.2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "MetaSerializer\\": "src/MetaSerializer"
+    }
+  }
+}

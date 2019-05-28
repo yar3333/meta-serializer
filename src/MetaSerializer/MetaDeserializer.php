@@ -38,7 +38,7 @@ class MetaDeserializer
         if ($p) {
             if (preg_match('/@var\s+([^\s]+)/', $p->getDocComment(), $matches)) {
                 list(, $type) = $matches;
-                if ($type) {
+                if ($type && $type !== "mixed") {
                     if (strpos('|', $type) === false) return $type;
                 }
             }

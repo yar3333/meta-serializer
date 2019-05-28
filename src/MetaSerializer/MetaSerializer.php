@@ -17,7 +17,7 @@ class MetaSerializer
         if (method_exists($src, $method)) {
             $m = new \ReflectionMethod($src, $method);
             $m->setAccessible(true);
-            $m->invokeArgs($src, [ &$dest, $property ]);
+            $m->invokeArgs($src, [ &$dest, $property, $this ]);
         }
         else {
             $this->serializeProperty($src, $dest, $property);

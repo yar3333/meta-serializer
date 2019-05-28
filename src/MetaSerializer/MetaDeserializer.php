@@ -24,7 +24,7 @@ class MetaDeserializer
 		if (method_exists($dest, $method)) {
             $m = new \ReflectionMethod($dest, $method);
             $m->setAccessible(true);
-            $m->invokeArgs($dest, [ $src, $property ]);
+            $m->invokeArgs($dest, [ $src, $property, $this ]);
         }
 		else {
             $this->deserializeProperty($src, $dest, $property);

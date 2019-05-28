@@ -31,7 +31,7 @@ class MetaDeserializer
         }
     }
 
-    protected function getPropertyType(object $obj, string $property) : ?string
+    private function getPropertyType(object $obj, string $property) : ?string
     {
         $class = new \ReflectionClass($obj);
         $p = $class->getProperty($property);
@@ -52,11 +52,13 @@ class MetaDeserializer
      * @param string $property
      * @throws MetaDeserializerException
      */
-    protected function deserializeProperty($src, object $dest, string $property) : void
+    private function deserializeProperty($src, object $dest, string $property) : void
     {
         try {
-            if (!array_key_exists($property, $src)) $this->noValueProvided($src, $dest, $property);
-            $dest->$property = $this->deserializeValue($src[$property], $this->getPropertyType($dest, $property), get_class($dest));
+            $type = $this->getPropertyType($dest, $property);
+            $parentClass = get_class($dest);
+            if (!array_key_exists($property, $src)) $dest->$property = $this->onNoValueProvided($type, $parentClass);
+            else                                    $dest->$property = $this->deserializeValue($src[$property], $type, $parentClass);
         }
         catch (MetaDeserializerException $e) {
             throw new MetaDeserializerException("Property [$property] deserialization error", 0, $e);
@@ -73,10 +75,6 @@ class MetaDeserializer
      */
     protected function deserializeValueNotNullableType($value, string $type, ?string $parentClass)
     {
-        if (!$type) return $value;
-
-        if ($value === null) throw new MetaDeserializerException("Value must not be null.");
-
         if (substr($type, -2) == "[]") {
             if (!is_array($value) && !($value instanceof \ArrayObject)) throw new MetaDeserializerException("Value must be array.");
             $r = [];
@@ -129,17 +127,29 @@ class MetaDeserializer
     }
 
     /**
-     * Override to ignore not present values.
-     * @param $src
-     * @param object $dest
-     * @param string $property
+     * Called if no value for property provided in source array.
+     * Override to deal with not preset values. This function must throw exception or return result value.
+     * @param string $type
+     * @param string $parentClass
      * @throws MetaDeserializerException
      */
-    protected function noValueProvided($src, object $dest, string $property)
+    protected function onNoValueProvided(?string $type, ?string $parentClass)
     {
-        throw new MetaDeserializerException("Value must be specified", 0);
+        throw new MetaDeserializerException("Value must be specified");
     }
 
+    /**
+     * Called if null value for not-nullable type found.
+     * Override to deal with null values. This function must throw exception or return result value.
+     * @param string $type
+     * @param string $parentClass
+     * @throws MetaDeserializerException
+     */
+    protected function onNotNullableValueIsNull(string $type, ?string $parentClass)
+    {
+        throw new MetaDeserializerException("Value must not be null");
+    }
+    
     /**
      * Override to create object with parameters if need.
      * @param string $class
@@ -165,18 +175,20 @@ class MetaDeserializer
         if ($nullable && $value === null) return null;
         if ($nullable) $type = substr($type, 1);
 
+        if ($value === null) return $this->onNotNullableValueIsNull($type, $parentClass);
+
         return $this->deserializeValueNotNullableType($value, $type, $parentClass);
     }
 
     /**
-     * @param array $src
+     * @param array $src|\ArrayObject
      * @param string|object $class_or_object
      * @param string[] $properties
      * @return object
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    function deserializeObject(array $src, $class_or_object, array $properties=null) : object
+    function deserializeObject($src, $class_or_object, array $properties=null) : object
     {
 		$dest = is_string($class_or_object) ? $this->createObject($class_or_object) : $class_or_object;
 

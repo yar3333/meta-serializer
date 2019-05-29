@@ -4,6 +4,8 @@ namespace MetaSerializer;
 
 class MetaDeserializer
 {
+    protected const STD_TYPES = [ "string", "int", "float", "array", "bool", "object" ];
+
     protected $methodSuffix;
 
     function __construct(string $methodSuffix)
@@ -31,21 +33,25 @@ class MetaDeserializer
         }
     }
 
-    function getPropertyType(object $obj, string $property, string $namespace) : ?string
+    function getPropertyType(object $obj, string $property) : ?string
     {
         $class = new \ReflectionClass($obj);
         $p = $class->getProperty($property);
-        if ($p) {
-            if (preg_match('/@var\s+([^\s]+)/', $p->getDocComment(), $matches)) {
-                list(, $type) = $matches;
-                if ($type && $type !== "mixed") {
-                    if (strpos('|', $type) === false) {
-                        return ltrim(substr($type, 0, 1) === "\\" ? $type : $namespace . $type, "\\");
-                    }
-                }
-            }
-        }
-        return null;
+        if (!$p) return null;
+
+        if (!preg_match('/@var\s+([^\s]+)/', $p->getDocComment(), $matches)) return null;
+        list(, $type) = $matches;
+
+        if (!$type || $type === "mixed") return null;
+        if (strpos($type, '|') !== false) return null;
+
+        $optional = substr($type, 0, 1) === "?" ? "?" : "";
+        if ($optional) $type = substr($type, 1);
+
+        if (array_search($type, self::STD_TYPES, true) !== false) return $optional . $type;
+        if (substr($type, 0, 1) === "\\") return $optional . substr($type, 1);
+
+        return $optional . ltrim($this->getObjectNamespace($obj) . $type, "\\");
     }
 
     /**
@@ -58,7 +64,7 @@ class MetaDeserializer
     private function deserializeProperty($src, object $dest, string $property) : void
     {
         try {
-            $type = $this->getPropertyType($dest, $property, $this->getObjectNamespace($dest));
+            $type = $this->getPropertyType($dest, $property);
             if (!array_key_exists($property, $src)) {
                 /** @noinspection PhpVoidFunctionResultUsedInspection */
                 $dest->$property = $this->onNoValueProvided($type);
@@ -75,7 +81,7 @@ class MetaDeserializer
     function getObjectNamespace(object $obj) : string
     {
         $class = get_class($obj);
-        $n = strrpos("\\", $class);
+        $n = strrpos($class, "\\");
         if ($n === false || $n === 0) return "\\";
         return substr($class, 0, $n + 1);
     }
@@ -206,7 +212,11 @@ class MetaDeserializer
      */
     function deserializeObject($src, string $class, array $properties=null) : object
     {
-		$dest = $this->createObject("\\" . ltrim($class, "\\"));
+		$class = "\\" . ltrim($class, "\\");
+		if (!class_exists($class)) {
+            throw new MetaDeserializerException("Class `$class` not found");
+        }
+        $dest = $this->createObject($class);
         $this->deserializeObjectProperties($src, $dest, $properties);
         return $dest;
     }

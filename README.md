@@ -32,6 +32,6 @@ $data = $ser->serializeObject(new MyClass());
 var_dump($data);
 
 $des = new MetaDeserializer("__fromJson");
-$obj = $des->deserializeObject(MyClass::class, $data);
+$obj = $des->deserializeObject($data, MyClass::class);
 var_dump($obj);
 ```

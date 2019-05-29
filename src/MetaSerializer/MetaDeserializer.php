@@ -204,7 +204,7 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    final function deserializeObject($src, string $class, array $properties=null) : object
+    function deserializeObject($src, string $class, array $properties=null) : object
     {
 		$dest = $this->createObject("\\" . ltrim($class, "\\"));
         $this->deserializeObjectProperties($src, $dest, $properties);
@@ -218,7 +218,7 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    final function deserializeObjectProperties($src, object $dest, array $properties=null) : void
+    function deserializeObjectProperties($src, object $dest, array $properties=null) : void
     {
         if ($properties === null) $properties = array_keys(get_object_vars($dest));
 

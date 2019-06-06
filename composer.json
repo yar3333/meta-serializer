@@ -2,7 +2,6 @@
   "name": "meta-serializer/meta-serializer",
   "type": "library",
   "description": "MetaSerializer php library.",
-  "version": "1.1.2",
   "require": {
     "php": ">=7.2.0"
   },

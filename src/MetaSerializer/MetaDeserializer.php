@@ -22,14 +22,19 @@ class MetaDeserializer
      */
     private function deserializePropertyViaMethod($src, object $dest, string $property) : void
     {
-        $method = $property . $this->methodSuffix;
-		if (method_exists($dest, $method)) {
-            $m = new \ReflectionMethod($dest, $method);
-            $m->setAccessible(true);
-            $m->invokeArgs($dest, [ $src, $property, $this ]);
+        try {
+            $method = $property . $this->methodSuffix;
+            if (method_exists($dest, $method)) {
+                $m = new \ReflectionMethod($dest, $method);
+                $m->setAccessible(true);
+                $m->invokeArgs($dest, [ $src, $property, $this ]);
+            }
+            else {
+                $this->deserializeProperty($src, $dest, $property);
+            }
         }
-		else {
-            $this->deserializeProperty($src, $dest, $property);
+        catch (\Exception $e) {
+            throw new MetaDeserializerException("Property [$property] deserialization error", 0, $e);
         }
     }
 
@@ -63,18 +68,13 @@ class MetaDeserializer
      */
     private function deserializeProperty($src, object $dest, string $property) : void
     {
-        try {
-            $type = $this->getPropertyType($dest, $property);
-            if (!array_key_exists($property, $src)) {
-                /** @noinspection PhpVoidFunctionResultUsedInspection */
-                $dest->$property = $this->onNoValueProvided($type);
-            }
-            else {
-                $dest->$property = $this->deserializeValue($src[$property], $type);
-            }
+        $type = $this->getPropertyType($dest, $property);
+        if (!array_key_exists($property, $src)) {
+            /** @noinspection PhpVoidFunctionResultUsedInspection */
+            $dest->$property = $this->onNoValueProvided($type);
         }
-        catch (MetaDeserializerException $e) {
-            throw new MetaDeserializerException("Property [$property] deserialization error", 0, $e);
+        else {
+            $dest->$property = $this->deserializeValue($src[$property], $type);
         }
     }
 

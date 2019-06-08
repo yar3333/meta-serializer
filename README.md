@@ -20,7 +20,7 @@ class MyClass
 	/**
 	 * @var ?int This is nullable int.
 	 */
-	public $a;
+	public $a = 5;
 	
 	public $b = "str";
 	protected b__toJson(&$data, $property) { $data['myJsonFieldName'] = $this->b . "InJson"; }
@@ -28,10 +28,12 @@ class MyClass
 }
 
 $ser = new MetaSerializer("__toJson");
-$data = $ser->serializeObject(new MyClass());
-var_dump($data);
+$data = $ser->serializeObject(new MyClass()); // [ "a" => 5, "myJsonFieldName" => "strInJson" ]
 
 $des = new MetaDeserializer("__fromJson");
-$obj = $des->deserializeObject($data, MyClass::class);
-var_dump($obj);
+
+$obj = $des->deserializeObject($data, MyClass::class); // $obj->a = 5, $obj->b = "strInJson"
+
+$obj = new MyClass(); // manually object creating
+$des->deserializeObjectProperties($data, $obj);
 ```

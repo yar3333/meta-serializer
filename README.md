@@ -10,10 +10,10 @@ Install
 composer require meta-serializer/meta-serializer
 ```
 
-
 Using
-=====
+-----
 
+Quick example:
 ```php
 class MyClass
 {

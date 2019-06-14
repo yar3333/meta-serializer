@@ -17,10 +17,10 @@ class MetaDeserializer
 
     /**
      * @param array|\ArrayObject $src
-     * @param \StdClass $dest
+     * @param object $dest
      * @param string $property
      */
-    private function deserializePropertyViaMethod($src, \StdClass $dest, string $property) : void
+    private function deserializePropertyViaMethod($src, $dest, string $property) : void
     {
         try {
             $method = $property . $this->methodSuffix;
@@ -38,7 +38,7 @@ class MetaDeserializer
         }
     }
 
-    protected function getPropertyType(\StdClass $obj, string $property, \ReflectionProperty $p = null) : ?string
+    protected function getPropertyType($obj, string $property, \ReflectionProperty $p = null) : ?string
     {
         $p = $p ?? new \ReflectionProperty($obj, $property);
         if (!$p) return null;
@@ -68,7 +68,7 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    private function deserializeProperty($src, \StdClass $dest, string $property) : void
+    private function deserializeProperty($src, $dest, string $property) : void
     {
         $p = new \ReflectionProperty($dest, $property);
 
@@ -95,7 +95,11 @@ class MetaDeserializer
         }
     }
 
-    protected function getObjectNamespace(\StdClass $obj) : string
+    /**
+     * @param object $obj
+     * @return string
+     */
+    protected function getObjectNamespace($obj) : string
     {
         $class = get_class($obj);
         $n = strrpos($class, "\\");
@@ -191,7 +195,7 @@ class MetaDeserializer
      * @param string $class
      * @return object
      */
-    protected function createObject(string $class) : \StdClass
+    protected function createObject(string $class)
     {
         return new $class();
     }
@@ -227,7 +231,7 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    public function deserializeObject($src, string $class, array $properties=null) : \StdClass
+    public function deserializeObject($src, string $class, array $properties=null)
     {
 		$class = "\\" . ltrim($class, "\\");
 		if (!class_exists($class)) {
@@ -245,7 +249,7 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    public function deserializeObjectProperties($src, \StdClass $dest, array $properties=null) : void
+    public function deserializeObjectProperties($src, $dest, array $properties=null) : void
     {
         if ($properties === null) $properties = array_keys(get_object_vars($dest));
 

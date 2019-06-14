@@ -47,6 +47,9 @@ class MetaSerializer
 
         $phpDoc = $p->getDocComment();
         if (is_string($phpDoc)) {
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'ignore\b/', $phpDoc)) {
+                return;
+            }
             if (preg_match('/@' . $this->phpDocMetaPrefix . 'ignoreNull\b/', $phpDoc)) {
                 $ignoreNull = true;
             }

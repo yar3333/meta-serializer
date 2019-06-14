@@ -13,7 +13,7 @@ class MetaSerializer
         $this->phpDocMetaPrefix = $phpDocMetaPrefix;
     }
 
-    private function serializePropertyViaMethod(object $src, array &$dest, string $property) : void
+    private function serializePropertyViaMethod(\StdClass $src, array &$dest, string $property) : void
     {
         $method = $property . $this->methodSuffix;
         if (method_exists($src, $method)) {
@@ -26,7 +26,7 @@ class MetaSerializer
         }
     }
 
-    private function serializeProperty(object $src, array &$dest, string $property) : void
+    private function serializeProperty(\StdClass $src, array &$dest, string $property) : void
     {
         $p = new \ReflectionProperty($src, $property);
 
@@ -71,7 +71,7 @@ class MetaSerializer
     	return $value;
     }
 
-    public function serializeObject(object $obj, array $properties=null) : array
+    public function serializeObject(\StdClass $obj, array $properties=null) : array
     {
         if ($properties === null) $properties = array_keys(get_object_vars($obj));
 

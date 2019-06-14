@@ -5,10 +5,12 @@ namespace MetaSerializer;
 class MetaSerializer
 {
     public $methodSuffix;
+    public $phpDocMetaPrefix;
 
-    function __construct(string $methodSuffix)
+    public function __construct(string $methodSuffix = "_serialize", string $phpDocMetaPrefix = "")
     {
         $this->methodSuffix = $methodSuffix;
+        $this->phpDocMetaPrefix = $phpDocMetaPrefix;
     }
 
     private function serializePropertyViaMethod(object $src, array &$dest, string $property) : void
@@ -26,10 +28,31 @@ class MetaSerializer
 
     private function serializeProperty(object $src, array &$dest, string $property) : void
     {
-        $dest[$property] = $this->serializeValue($src->$property);
+        $p = new \ReflectionProperty($src, $property);
+
+        $ignoreNull = false;
+        $renameTo = null;
+
+        $phpDoc = $p->getDocComment();
+        if (is_string($phpDoc)) {
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'ignoreNull\b/', $phpDoc)) {
+                $ignoreNull = true;
+            }
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'renameTo\s+([A-Za-z_][A-Za-z_0-9]*)/', $phpDoc, $matches)) {
+                $renameTo = $matches[1];
+            }
+        }
+
+        if ($ignoreNull && $src->$property === null) return;
+
+        $dest[$renameTo ?? $property] = $this->serializeValue($src->$property);
     }
 
-    function serializeValue($value)
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    public function serializeValue($value)
     {
     	if (is_array($value) || $value instanceof \ArrayObject)
         {
@@ -48,7 +71,7 @@ class MetaSerializer
     	return $value;
     }
 
-    function serializeObject(object $obj, array $properties=null) : array
+    public function serializeObject(object $obj, array $properties=null) : array
     {
         if ($properties === null) $properties = array_keys(get_object_vars($obj));
 

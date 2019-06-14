@@ -91,7 +91,7 @@ class MetaDeserializer
             $dest->$property = $this->onNoValueProvided($type);
         }
         else {
-            $dest->$property = $this->deserializeValue($optional && !array_key_exists($sourceName ?? $property, $src) ? null : $src[$sourceName ?? $property], $type);
+            $dest->$property = $optional && !array_key_exists($sourceName ?? $property, $src) ? null : $this->deserializeValue($src[$sourceName ?? $property], $type);
         }
     }
 

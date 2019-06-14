@@ -86,12 +86,17 @@ class MetaDeserializer
         }
 
         $type = $this->getPropertyType($dest, $property, $p);
-        if (!$optional && !array_key_exists($sourceName ?? $property, $src)) {
+
+        $valueExists = array_key_exists($sourceName ?? $property, $src);
+        if (!$optional && !$valueExists) {
             /** @noinspection PhpVoidFunctionResultUsedInspection */
             $dest->$property = $this->onNoValueProvided($type);
         }
+        else if ($optional && !$valueExists) {
+            $dest->$property = null;
+        }
         else {
-            $dest->$property = $optional && !array_key_exists($sourceName ?? $property, $src) ? null : $this->deserializeValue($src[$sourceName ?? $property], $type);
+            $dest->$property = $this->deserializeValue($src[$sourceName ?? $property], $type && $optional ? '?' . ltrim($type, '?') : $type);
         }
     }
 

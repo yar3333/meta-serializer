@@ -117,14 +117,7 @@ class MetaDeserializer
      */
     protected function deserializeValueNotNullableType($value, string $type)
     {
-        if (substr($type, -2) === '[]') {
-            if (!is_array($value) && !($value instanceof \ArrayObject)) throw new MetaDeserializerException("Value must be array.");
-            $r = [];
-            foreach ($value as $k => $v) {
-                $r[$k] = $this->deserializeValue($v, substr($type, 0, -2));
-            }
-            return $r;
-        }
+        if (substr($type, -2) === '[]') return $this->deserializeArray($value, substr($type, 0, -2));
 
         switch ($type) {
             case 'string':
@@ -140,18 +133,13 @@ class MetaDeserializer
                 return (bool)$value;
 
             case 'array':
-                if (!is_array($value) && !($value instanceof \ArrayObject)) throw new MetaDeserializerException('Value must be array.');
-                $r = [];
-                foreach ($value as $k => $v) {
-                    $r[$k] = $this->deserializeValue($v, null);
-                }
-                return $r;
+                return $this->deserializeArray($value);
 
             case 'object':
                 if (!is_object($value)) throw new MetaDeserializerException("Value must be object.");
                 $r = (object)[];
                 foreach (get_object_vars($value) as $k => $v) {
-                    $r->$k = $this->deserializeValue($v, null);
+                    $r->$k = $this->deserializeValue($v);
                 }
                 return $r;
 
@@ -166,6 +154,17 @@ class MetaDeserializer
         }
 
         return $this->deserializeObject($value, $type);
+    }
+
+    public function deserializeArray($array, string $itemType = null) : array
+    {
+        if (!is_array($array) && !($array instanceof \ArrayObject)) throw new MetaDeserializerException("Value must be array.");
+
+        $r = [];
+        foreach ($array as $k => $v) {
+            $r[$k] = $this->deserializeValue($v, $itemType);
+        }
+        return $r;
     }
 
     /**

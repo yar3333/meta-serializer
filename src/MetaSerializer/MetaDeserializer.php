@@ -77,6 +77,9 @@ class MetaDeserializer
 
         $phpDoc = $p->getDocComment();
         if (is_string($phpDoc)) {
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'ignore\b/', $phpDoc, $matches)) {
+                return;
+            }
             if (preg_match('/@' . $this->phpDocMetaPrefix . 'optional\b/', $phpDoc, $matches)) {
                 $optional = true;
             }

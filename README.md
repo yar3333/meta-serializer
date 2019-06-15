@@ -36,7 +36,7 @@ class MyClass
 	/**
 	 * Example of using phpdoc-meta.
 	 * For serializer: `ignore`, `ignoreNull` and `renameTo`.
-	 * For deserializer: `optional` and `sourceName`.
+	 * For deserializer: `ignore`, `optional` and `sourceName`.
 	 * @var string
 	 * @toJson_ignoreNull
 	 * @toJson_renameTo fieldC

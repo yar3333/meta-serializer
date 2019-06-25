@@ -34,7 +34,7 @@ class MetaDeserializer
             }
         }
         catch (\Exception $e) {
-            throw new MetaDeserializerException("Property [$property] deserialization error", 0, $e);
+            throw new MetaDeserializerException("Property [$property] deserialization error. " . $e->getMessage(), 0, $e);
         }
     }
 
@@ -152,13 +152,9 @@ class MetaDeserializer
                 return $r;
 
             case 'DateTime':
-                if (is_numeric($value)) {
-                    $r = new \DateTime();
-                    $r->setTimestamp($value);
-                    return $r;
-                }
+                if (is_numeric($value)) return new \DateTime("@$value");
                 if (is_string($value)) return new \DateTime($value);
-                throw new MetaDeserializerException('Expected string/date-time or number/timestamp');
+                throw new MetaDeserializerException('Expected string/date-time or number/timestamp.');
         }
 
         return $this->deserializeObject($value, $type);
@@ -183,7 +179,7 @@ class MetaDeserializer
      */
     protected function onNoValueProvided(?string $type)
     {
-        throw new MetaDeserializerException('Value must be specified');
+        throw new MetaDeserializerException('Value must be specified.');
     }
 
     /**
@@ -194,7 +190,7 @@ class MetaDeserializer
      */
     protected function onNotNullableValueIsNull(string $type)
     {
-        throw new MetaDeserializerException('Value must not be null');
+        throw new MetaDeserializerException('Value must not be null.');
     }
     
     /**
@@ -242,7 +238,7 @@ class MetaDeserializer
     {
 		$class = "\\" . ltrim($class, "\\");
 		if (!class_exists($class)) {
-            throw new MetaDeserializerException("Class `$class` not found");
+            throw new MetaDeserializerException("Class `$class` not found.");
         }
         $dest = $this->createObject($class);
         $this->deserializeObjectProperties($src, $dest, $properties);

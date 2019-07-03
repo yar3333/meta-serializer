@@ -38,19 +38,24 @@ class MetaDeserializer
         }
     }
 
+    private function normalizeTypeString(string $typeString) : array
+    {
+        if (!$typeString) return [ null, null ];
+        $types = explode('|', $typeString);
+        $types_wo_null = array_filter($types, static function($x) { return strtolower($x) !== 'null'; });
+        if (count($types_wo_null) !== 1) return [ null, null ];
+        return [ count($types) > count($types_wo_null) ? '?' : '', $types_wo_null[0] ];
+    }
+
     protected function getPropertyType($obj, string $property, \ReflectionProperty $p = null) : ?string
     {
         $p = $p ?? new \ReflectionProperty($obj, $property);
         if (!$p) return null;
 
-        if (!preg_match('/@var\s+([^\s]+)/', $p->getDocComment(), $matches)) return null;
-        [, $type] = $matches;
+        if (!preg_match('/@var\s+(\S+)/', $p->getDocComment(), $matches)) return null;
+        [ $optional, $type ] = $this->normalizeTypeString($matches[1]);
 
         if (!$type || $type === 'mixed') return null;
-        if (strpos($type, '|') !== false) return null;
-
-        $optional = substr($type, 0, 1) === "?" ? "?" : "";
-        if ($optional) $type = substr($type, 1);
 
         $arraySuffix = "";
         while (substr($type, -2) === "[]") { $type = substr($type, 0, -2); $arraySuffix .= '[]'; }

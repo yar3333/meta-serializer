@@ -8,7 +8,7 @@ use MetaSerializer\MetaDeserializer;
 class MyClass
 {
 	/**
-	 * @var ?int
+	 * @var int|null
 	 */
 	public $a = 5;
 

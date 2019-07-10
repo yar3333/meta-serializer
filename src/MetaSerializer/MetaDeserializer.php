@@ -52,7 +52,7 @@ class MetaDeserializer
         $p = $p ?? new \ReflectionProperty($obj, $property);
         if (!$p) return null;
 
-        if (!preg_match('/@var\s+(\S+)/', $p->getDocComment(), $matches)) return null;
+        if (!preg_match('/@var\s+((?:[a-zA-Z0-9_?\\\\]|\[|\])+)/', $p->getDocComment(), $matches)) return null;
         [ $optional, $type ] = $this->normalizeTypeString($matches[1]);
 
         if (!$type || $type === 'mixed') return null;

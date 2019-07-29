@@ -5,8 +5,8 @@ meta-serializer
 [![Latest Stable Version](https://poser.pugx.org/meta-serializer/meta-serializer/version)](https://packagist.org/packages/meta-serializer/meta-serializer)
 [![Total Downloads](https://poser.pugx.org/meta-serializer/meta-serializer/downloads)](https://packagist.org/packages/meta-serializer/meta-serializer)
 
-PHP serializer/deserializer with types from phpdoc and annotation-like functions.
-Support array, ArrayObject, nested objects and associative arrays.
+Production ready simple and flexible PHP serializer and deserializer.
+Support `array`, `ArrayObject`, nested objects and associative arrays.
 
 Install
 -------
@@ -14,20 +14,38 @@ Install
 composer require meta-serializer/meta-serializer
 ```
 
+
 Using
 -----
+Control serialization/deserialization by phpdoc @directives or by meta-like class methods.
+Annotation-like methods have a higher priority.
+Class attributes for serialization/deserialization must be public.
 
-Quick example:
+Serializer:
+ * override `onRecursiveObjectReferenceDetected` if need (throw exception by default);
+ * catch `MetaDeserializerException` to detect deserialization errors.
+
+Deserializer:
+ * use type from @var phpdoc;
+ * support special phpdoc directives: `ignore`, `optional` and `sourceName` (see example);
+ * override `onNoValueProvided` if need (throw exception by default);
+ * override `onNotNullableValueIsNull` if need (throw exception by default);
+ * override `deserializeValueNotNullableType` to support additional types;
+ * catch `MetaDeserializerException` to detect deserialization errors.
+
+
+Example
+-------
 ```php
 class MyClass
 {
 	/**
-	 * @var ?int This is nullable int.
+	 * @var int|null This is a nullable int.
 	 */
 	public $a = 5;
 	
 	/**
-	 * Example of using meta-like methods.
+	 * Using meta-like methods.
 	 */
 	public $b = "str";
 	protected function b__toJson(array &$data, string $prop, MetaSerializer $ser) { $data['myJsonFieldName'] = $this->b . "InJson"; }
@@ -46,13 +64,24 @@ class MyClass
 	public $c = "thisIsC";
 }
 
-$ser = new MetaSerializer("__toJson", "toJson_");
-$data = $ser->serializeObject(new MyClass()); // [ "a" => 5, "myJsonFieldName" => "strInJson", "fieldC" => "thisIsC" ]
 
-$des = new MetaDeserializer("__fromJson", "fromJson_");
+// SERIALIZATION
 
-$obj = $des->deserializeObject($data, MyClass::class); // $obj->a = 5, $obj->b = "strInJson", $obj->c = "thisIsC"
+$serializer = new MetaSerializer("__toJson", "toJson_");
+$data = $serializer->serializeObject(new MyClass()); 
+// data: [ "a" => 5, "myJsonFieldName" => "strInJson", "fieldC" => "thisIsC" ]
 
-$obj = new MyClass(); // manually object creating
-$des->deserializeObjectProperties($data, $obj);
+
+// DESERIALIZATION
+
+$deserializer = new MetaDeserializer("__fromJson", "fromJson_");
+
+// object will be created by deserializeObject(), so
+// it must has constructor with no/default parameters
+$obj = $deserializer->deserializeObject($data, MyClass::class); 
+// obj: MyClass { a:5, b:"strInJson", c:"thisIsC" }
+
+// manually object creating
+$obj = new MyClass();
+$deserializer->deserializeObjectProperties($data, $obj);
 ```

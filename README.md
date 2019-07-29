@@ -24,7 +24,8 @@ Class attributes for serialization/deserialization must be public.
 Serializer:
  * support special phpdoc annotations: `@ignore`, `@ignoreNull` and `@renameTo` (see example);
  * override `onRecursiveObjectReferenceDetected` if need (throws exception by default);
- * catch `MetaDeserializerException` to detect deserialization errors.
+ * override `serializeValue`  to support additional types;
+ * catch `MetaSerializerException` to detect deserialization errors.
 
 Deserializer:
  * use type from @var phpdoc (specify full class name with namespace like `\MyNamespace\MyNestedClass` or `\DateTime`);
@@ -32,7 +33,8 @@ Deserializer:
  * override `onNoValueProvided` if need (throws exception by default);
  * override `onNotNullableValueIsNull` if need (throws exception by default);
  * override `deserializeValueNotNullableType` to support additional types;
- * catch `MetaSerializerException` to detect deserialization errors.
+ * `\DateTime` supported from string (in format suatable for `\DateTime` constructor) or number (unix timestamp);
+ * catch `MetaDeserializerException` to detect deserialization errors.
 
 
 Example
@@ -41,7 +43,7 @@ Example
 class MyClass
 {
 	/**
-	 * @var int|null This is a nullable int.
+	 * @var int|null This is a nullable integer.
 	 */
 	public $a = 5;
 	

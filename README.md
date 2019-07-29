@@ -17,17 +17,18 @@ composer require meta-serializer/meta-serializer
 
 Using
 -----
-Control serialization/deserialization by phpdoc @directives or by meta-like class methods.
-Annotation-like methods have a higher priority.
+Control serialization/deserialization by phpdoc @annotations or by field-related class methods.
+Methods have a higher priority.
 Class attributes for serialization/deserialization must be public.
 
 Serializer:
+ * support special phpdoc annotations: `@ignore`, `@ignoreNull` and `@renameTo` (see example);
  * override `onRecursiveObjectReferenceDetected` if need (throws exception by default);
  * catch `MetaDeserializerException` to detect deserialization errors.
 
 Deserializer:
  * use type from @var phpdoc (specify full class name with namespace like `\MyNamespace\MyNestedClass` or `\DateTime`);
- * support special phpdoc directives: `ignore`, `optional` and `sourceName` (see example);
+ * support special phpdoc annotations: `@ignore`, `@optional` and `@sourceName` (see example);
  * override `onNoValueProvided` if need (throws exception by default);
  * override `onNotNullableValueIsNull` if need (throws exception by default);
  * override `deserializeValueNotNullableType` to support additional types;
@@ -45,16 +46,14 @@ class MyClass
 	public $a = 5;
 	
 	/**
-	 * Using meta-like methods.
+	 * Using field-related methods.
 	 */
 	public $b = "str";
 	protected function b__toJson(array &$data, string $prop, MetaSerializer $ser) { $data['myJsonFieldName'] = $this->b . "InJson"; }
 	protected function b__fromJson(array $data, string $prop, MetaDeserializer $des) { $this->b = $data['myJsonFieldName']; }
 	
 	/**
-	 * Example of using phpdoc-meta.
-	 * For serializer: `ignore`, `ignoreNull` and `renameTo`.
-	 * For deserializer: `ignore`, `optional` and `sourceName`.
+	 * Using phpdoc annotations.
 	 * @var string
 	 * @toJson_ignoreNull
 	 * @toJson_renameTo fieldC

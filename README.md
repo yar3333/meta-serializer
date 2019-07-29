@@ -31,7 +31,7 @@ Deserializer:
  * override `onNoValueProvided` if need (throws exception by default);
  * override `onNotNullableValueIsNull` if need (throws exception by default);
  * override `deserializeValueNotNullableType` to support additional types;
- * catch `MetaDeserializerException` to detect deserialization errors.
+ * catch `MetaSerializerException` to detect deserialization errors.
 
 
 Example

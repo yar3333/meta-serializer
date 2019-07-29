@@ -42,27 +42,27 @@ Example
 ```php
 class MyClass
 {
-	/**
-	 * @var int|null This is a nullable integer.
-	 */
-	public $a = 5;
-	
-	/**
-	 * Using field-related methods.
-	 */
-	public $b = "str";
-	protected function b__toJson(array &$data, string $prop, MetaSerializer $ser) { $data['myJsonFieldName'] = $this->b . "InJson"; }
-	protected function b__fromJson(array $data, string $prop, MetaDeserializer $des) { $this->b = $data['myJsonFieldName']; }
-	
-	/**
-	 * Using phpdoc annotations.
-	 * @var string
-	 * @toJson_ignoreNull
-	 * @toJson_renameTo fieldC
-	 * @fromJson_optional
-	 * @fromJson_sourceName fieldC
-	 */
-	public $c = "thisIsC";
+    /**
+     * @var int|null This is a nullable integer.
+     */
+    public $a = 5;
+    
+    /**
+     * Using field-related methods.
+     */
+    public $b = "str";
+    protected function b__toJson(array &$data, string $prop, MetaSerializer $ser) { $data['myJsonFieldName'] = $this->b . "InJson"; }
+    protected function b__fromJson(array $data, string $prop, MetaDeserializer $des) { $this->b = $data['myJsonFieldName']; }
+    
+    /**
+     * Using phpdoc annotations.
+     * @var string
+     * @toJson_ignoreNull
+     * @toJson_renameTo fieldC
+     * @fromJson_optional
+     * @fromJson_sourceName fieldC
+     */
+    public $c = "thisIsC";
 }
 
 

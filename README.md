@@ -26,7 +26,7 @@ Serializer:
  * catch `MetaDeserializerException` to detect deserialization errors.
 
 Deserializer:
- * use type from @var phpdoc;
+ * use type from @var phpdoc (specify full class name with namespace like `\MyNamespace\MyNestedClass` or `\DateTime`);
  * support special phpdoc directives: `ignore`, `optional` and `sourceName` (see example);
  * override `onNoValueProvided` if need (throws exception by default);
  * override `onNotNullableValueIsNull` if need (throws exception by default);

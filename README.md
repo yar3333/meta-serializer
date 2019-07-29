@@ -22,14 +22,14 @@ Annotation-like methods have a higher priority.
 Class attributes for serialization/deserialization must be public.
 
 Serializer:
- * override `onRecursiveObjectReferenceDetected` if need (throw exception by default);
+ * override `onRecursiveObjectReferenceDetected` if need (throws exception by default);
  * catch `MetaDeserializerException` to detect deserialization errors.
 
 Deserializer:
  * use type from @var phpdoc;
  * support special phpdoc directives: `ignore`, `optional` and `sourceName` (see example);
- * override `onNoValueProvided` if need (throw exception by default);
- * override `onNotNullableValueIsNull` if need (throw exception by default);
+ * override `onNoValueProvided` if need (throws exception by default);
+ * override `onNotNullableValueIsNull` if need (throws exception by default);
  * override `deserializeValueNotNullableType` to support additional types;
  * catch `MetaDeserializerException` to detect deserialization errors.
 

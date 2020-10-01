@@ -94,8 +94,8 @@ class MetaDeserializer
         }
 
         $type = $this->getPropertyType($dest, $property, $p);
-
-        $valueExists = array_key_exists($sourceName ?? $property, $src);
+        $seeking_value = $sourceName ?? $property;
+        $valueExists = is_array($src)? array_key_exists($seeking_value, $src) : property_exists($src, $seeking_value);
         if (!$optional && !$valueExists) {
             /** @noinspection PhpVoidFunctionResultUsedInspection */
             $dest->$property = $this->onNoValueProvided($type);

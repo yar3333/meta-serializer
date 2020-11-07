@@ -19,6 +19,7 @@ class MetaDeserializer
      * @param array|\ArrayObject $src
      * @param object $dest
      * @param string $property
+     * @throws MetaDeserializerException
      */
     private function deserializePropertyViaMethod($src, $dest, string $property) : void
     {
@@ -27,24 +28,24 @@ class MetaDeserializer
             if (method_exists($dest, $method)) {
                 $m = new \ReflectionMethod($dest, $method);
                 $m->setAccessible(true);
-                $m->invokeArgs($dest, [ $src, $property, $this ]);
-            }
-            else {
+                $m->invokeArgs($dest, [$src, $property, $this]);
+            } else {
                 $this->deserializeProperty($src, $dest, $property);
             }
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new MetaDeserializerException("Property [$property] deserialization error. " . $e->getMessage(), 0, $e);
         }
     }
 
     private function normalizeTypeString(string $typeString) : array
     {
-        if (!$typeString) return [ null, null ];
+        if (!$typeString) return [null, null];
         $types = explode('|', $typeString);
-        $types_wo_null = array_filter($types, static function($x) { return strtolower($x) !== 'null'; });
-        if (count($types_wo_null) !== 1) return [ null, null ];
-        return [ count($types) > count($types_wo_null) ? '?' : '', $types_wo_null[0] ];
+        $types_wo_null = array_filter($types, static function ($x) {
+            return strtolower($x) !== 'null';
+        });
+        if (count($types_wo_null) !== 1) return [null, null];
+        return [count($types) > count($types_wo_null) ? '?' : '', $types_wo_null[0]];
     }
 
     protected function getPropertyType($obj, string $property, \ReflectionProperty $p = null) : ?string
@@ -53,12 +54,15 @@ class MetaDeserializer
         if (!$p) return null;
 
         if (!preg_match('/@var\s+((?:[a-zA-Z0-9_?\\\\|]|\[|\])+)/', $p->getDocComment(), $matches)) return null;
-        [ $optional, $type ] = $this->normalizeTypeString($matches[1]);
+        [$optional, $type] = $this->normalizeTypeString($matches[1]);
 
         if (!$type || $type === 'mixed') return null;
 
         $arraySuffix = "";
-        while (substr($type, -2) === "[]") { $type = substr($type, 0, -2); $arraySuffix .= '[]'; }
+        while (substr($type, -2) === "[]") {
+            $type = substr($type, 0, -2);
+            $arraySuffix .= '[]';
+        }
 
         if (in_array($type, self::STD_TYPES, true)) return $optional . $type . $arraySuffix;
         if (substr($type, 0, 1) === "\\") return $optional . substr($type, 1) . $arraySuffix;
@@ -95,15 +99,13 @@ class MetaDeserializer
 
         $type = $this->getPropertyType($dest, $property, $p);
         $seeking_value = $sourceName ?? $property;
-        $valueExists = is_array($src)? array_key_exists($seeking_value, $src) : property_exists($src, $seeking_value);
+        $valueExists = is_array($src) ? array_key_exists($seeking_value, $src) : property_exists($src, $seeking_value);
         if (!$optional && !$valueExists) {
             /** @noinspection PhpVoidFunctionResultUsedInspection */
             $dest->$property = $this->onNoValueProvided($type);
-        }
-        else if ($optional && !$valueExists) {
+        } else if ($optional && !$valueExists) {
             $dest->$property = null;
-        }
-        else {
+        } else {
             $dest->$property = $this->deserializeValue($src[$sourceName ?? $property], $type && $optional ? '?' . ltrim($type, '?') : $type);
         }
     }
@@ -121,6 +123,17 @@ class MetaDeserializer
     }
 
     /**
+     * @param $value
+     * @param string $type
+     * @throws MetaDeserializerException
+     */
+    private function setSimpleType($value, string $type)
+    {
+        if (is_array($value) || is_object($value) || !settype($value, $type))
+            throw new MetaDeserializerException("Value must be $type.");
+    }
+
+    /**
      * Override to support additional types.
      * @param $value
      * @param string $type "bool", "int", "MyClass"...
@@ -134,16 +147,11 @@ class MetaDeserializer
 
         switch ($type) {
             case 'string':
-                return (string)$value;
-
             case 'float':
-                return (float)$value;
-
             case 'int':
-                return (int)$value;
-
             case 'bool':
-                return (bool)$value;
+                $this->setSimpleType($value, $type);
+                return $value;
 
             case 'array':
                 return $this->deserializeArray($value);
@@ -152,6 +160,7 @@ class MetaDeserializer
                 if (!is_object($value)) throw new MetaDeserializerException("Value must be object.");
                 $r = (object)[];
                 foreach (get_object_vars($value) as $k => $v) {
+                    /** @noinspection PhpVariableVariableInspection */
                     $r->$k = $this->deserializeValue($v);
                 }
                 return $r;
@@ -165,6 +174,13 @@ class MetaDeserializer
         return $this->deserializeObject($value, $type);
     }
 
+    /**
+     * @param $array
+     * @param string|null $itemType
+     * @return array
+     * @throws MetaDeserializerException
+     * @throws \ReflectionException
+     */
     public function deserializeArray($array, string $itemType = null) : array
     {
         if (!is_array($array) && !($array instanceof \ArrayObject)) throw new MetaDeserializerException("Value must be array.");
@@ -197,7 +213,7 @@ class MetaDeserializer
     {
         throw new MetaDeserializerException('Value must not be null.');
     }
-    
+
     /**
      * Override to create object with parameters if need.
      * @param string $class
@@ -211,8 +227,8 @@ class MetaDeserializer
     /**
      * @param mixed $value
      * @param string $type "?bool", "int", "MyClass"...
-     * @throws MetaDeserializerException
      * @return mixed
+     * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
     final function deserializeValue($value, string $type = null)
@@ -232,17 +248,16 @@ class MetaDeserializer
     }
 
     /**
-     * @param array $src|\ArrayObject
+     * @param array $src |\ArrayObject
      * @param string $class
      * @param string[] $properties
      * @return object
      * @throws MetaDeserializerException
-     * @throws \ReflectionException
      */
-    public function deserializeObject($src, string $class, array $properties=null)
+    public function deserializeObject($src, string $class, array $properties = null)
     {
-		$class = "\\" . ltrim($class, "\\");
-		if (!class_exists($class)) {
+        $class = "\\" . ltrim($class, "\\");
+        if (!class_exists($class)) {
             throw new MetaDeserializerException("Class `$class` not found.");
         }
         $dest = $this->createObject($class);
@@ -251,17 +266,16 @@ class MetaDeserializer
     }
 
     /**
-     * @param array $src|\ArrayObject
+     * @param array $src |\ArrayObject
      * @param object $dest
      * @param string[] $properties
      * @throws MetaDeserializerException
-     * @throws \ReflectionException
      */
-    public function deserializeObjectProperties($src, $dest, array $properties=null) : void
+    public function deserializeObjectProperties($src, $dest, array $properties = null) : void
     {
         if ($properties === null) $properties = array_keys(get_object_vars($dest));
 
-		foreach ($properties as $k) {
+        foreach ($properties as $k) {
             $this->deserializePropertyViaMethod($src, $dest, $k);
         }
     }

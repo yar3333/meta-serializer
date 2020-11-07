@@ -25,9 +25,8 @@ class MetaSerializer
         if (method_exists($src, $method)) {
             $m = new \ReflectionMethod($src, $method);
             $m->setAccessible(true);
-            $m->invokeArgs($src, [ &$dest, $property, $this, $usedObjects ]);
-        }
-        else {
+            $m->invokeArgs($src, [&$dest, $property, $this, $usedObjects]);
+        } else {
             $this->serializeProperty($src, $dest, $property, $usedObjects);
         }
     }
@@ -38,7 +37,7 @@ class MetaSerializer
      * @param string $property
      * @throws \ReflectionException
      */
-    private function serializeProperty($src, array &$dest, string $property, \SplObjectStorage $usedObjects=null) : void
+    private function serializeProperty($src, array &$dest, string $property, \SplObjectStorage $usedObjects = null) : void
     {
         if ($usedObjects === null) $usedObjects = new \SplObjectStorage();
 
@@ -67,14 +66,16 @@ class MetaSerializer
 
     /**
      * @param mixed $value
+     * @param \SplObjectStorage|null $usedObjects
      * @return mixed
+     * @throws MetaSerializerException
+     * @throws \ReflectionException
      */
-    public function serializeValue($value, \SplObjectStorage $usedObjects=null)
+    public function serializeValue($value, \SplObjectStorage $usedObjects = null)
     {
         if ($usedObjects === null) $usedObjects = new \SplObjectStorage();
 
-        if (is_array($value) || $value instanceof \ArrayObject)
-        {
+        if (is_array($value) || $value instanceof \ArrayObject) {
             $r = [];
             foreach ($value as $k => $v) {
                 $r[$k] = $this->serializeValue($v, $usedObjects);
@@ -82,24 +83,25 @@ class MetaSerializer
             return $r;
         }
 
-    	if (is_object($value))
-        {
+        if (is_object($value)) {
             return $this->serializeObject($value, null, $usedObjects);
         }
 
-    	return $value;
+        return $value;
     }
 
     /**
      * @param object $obj
      * @param array $properties
+     * @param \SplObjectStorage|null $usedObjects
      * @return array
+     * @throws MetaSerializerException
      * @throws \ReflectionException
      */
-    public function serializeObject($obj, array $properties=null, \SplObjectStorage $usedObjects=null) : array
+    public function serializeObject($obj, array $properties = null, \SplObjectStorage $usedObjects = null) : array
     {
         if ($usedObjects === null) $usedObjects = new \SplObjectStorage();
-        if ($usedObjects->contains($obj)) return $this->onRecursiveObjectReferenceDetected($obj);
+        if ($usedObjects->contains($obj)) $this->onRecursiveObjectReferenceDetected($obj);
         $usedObjects->attach($obj);
 
         if ($properties === null) $properties = array_keys(get_object_vars($obj));

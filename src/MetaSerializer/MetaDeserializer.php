@@ -147,10 +147,11 @@ class MetaDeserializer
 
         switch ($type) {
             case 'string':
+                return (string) $value;
             case 'float':
+                return (float) $value;
             case 'int':
-                $this->setSimpleType($value, $type);
-                return $value;
+                return (int) $value;
             case 'bool':
                return (bool) $value;
 

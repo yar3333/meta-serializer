@@ -149,9 +149,10 @@ class MetaDeserializer
             case 'string':
             case 'float':
             case 'int':
-            case 'bool':
                 $this->setSimpleType($value, $type);
                 return $value;
+            case 'bool':
+               return (bool) $value;
 
             case 'array':
                 return $this->deserializeArray($value);

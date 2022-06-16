@@ -17,6 +17,7 @@ class MetaSerializer
      * @param object $src
      * @param array $dest
      * @param string $property
+     * @param \SplObjectStorage $usedObjects
      * @throws \ReflectionException
      */
     private function serializePropertyViaMethod($src, array &$dest, string $property, \SplObjectStorage $usedObjects) : void
@@ -35,7 +36,10 @@ class MetaSerializer
      * @param object $src
      * @param array $dest
      * @param string $property
+     * @param \SplObjectStorage|null $usedObjects
+     * @throws MetaSerializerException
      * @throws \ReflectionException
+     * @throws MetaSerializerException
      */
     private function serializeProperty($src, array &$dest, string $property, \SplObjectStorage $usedObjects = null) : void
     {
@@ -54,7 +58,7 @@ class MetaSerializer
             if (preg_match('/@' . $this->phpDocMetaPrefix . 'ignoreNull\b/', $phpDoc)) {
                 $ignoreNull = true;
             }
-            if (preg_match('/@' . $this->phpDocMetaPrefix . 'renameTo\s+([A-Za-z_][A-Za-z_0-9]*)/', $phpDoc, $matches)) {
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'renameTo\s+([A-Za-z_]\w*)/', $phpDoc, $matches)) {
                 $renameTo = $matches[1];
             }
         }
@@ -92,7 +96,7 @@ class MetaSerializer
 
     /**
      * @param object $obj
-     * @param array $properties
+     * @param array|null $properties
      * @param \SplObjectStorage|null $usedObjects
      * @return array
      * @throws MetaSerializerException

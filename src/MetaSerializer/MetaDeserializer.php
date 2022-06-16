@@ -53,7 +53,7 @@ class MetaDeserializer
         $p = $p ?? new \ReflectionProperty($obj, $property);
         if (!$p) return null;
 
-        if (!preg_match('/@var\s+((?:[a-zA-Z0-9_?\\\\|]|\[|\])+)/', $p->getDocComment(), $matches)) return null;
+        if (!preg_match('/@var\s+((?:[a-zA-Z\d_?\\\\|]|\[|\])+)/', $p->getDocComment(), $matches)) return null;
         [$optional, $type] = $this->normalizeTypeString($matches[1]);
 
         if (!$type || $type === 'mixed') return null;
@@ -65,7 +65,7 @@ class MetaDeserializer
         }
 
         if (in_array($type, self::STD_TYPES, true)) return $optional . $type . $arraySuffix;
-        if (substr($type, 0, 1) === "\\") return $optional . substr($type, 1) . $arraySuffix;
+        if ($type[0] === "\\") return $optional . substr($type, 1) . $arraySuffix;
 
         return $optional . ltrim($this->getObjectNamespace($obj) . $type, "\\") . $arraySuffix;
     }
@@ -92,7 +92,7 @@ class MetaDeserializer
             if (preg_match('/@' . $this->phpDocMetaPrefix . 'optional\b/', $phpDoc, $matches)) {
                 $optional = true;
             }
-            if (preg_match('/@' . $this->phpDocMetaPrefix . 'sourceName\s+([A-Za-z_][A-Za-z_0-9]*)/', $phpDoc, $matches)) {
+            if (preg_match('/@' . $this->phpDocMetaPrefix . 'sourceName\s+([A-Za-z_]\w*)/', $phpDoc, $matches)) {
                 $sourceName = $matches[1];
             }
         }
@@ -137,7 +137,7 @@ class MetaDeserializer
      * Override to support additional types.
      * @param $value
      * @param string $type "bool", "int", "MyClass"...
-     * @return mixed
+     * @return array|bool|\DateTime|float|int|object|string
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
@@ -197,7 +197,7 @@ class MetaDeserializer
     /**
      * Called if no value for property provided in source array.
      * Override to deal with not preset values. This function must throw exception or return result value.
-     * @param string $type
+     * @param string|null $type
      * @throws MetaDeserializerException
      */
     protected function onNoValueProvided(?string $type)
@@ -217,7 +217,7 @@ class MetaDeserializer
     }
 
     /**
-     * Override to create object with parameters if need.
+     * Override to create object with parameters if needed.
      * @param string $class
      * @return object
      */
@@ -233,11 +233,11 @@ class MetaDeserializer
      * @throws MetaDeserializerException
      * @throws \ReflectionException
      */
-    final function deserializeValue($value, string $type = null)
+    final public function deserializeValue($value, string $type = null)
     {
         if (!$type) return $value;
 
-        $nullable = substr($type, 0, 1) === "?";
+        $nullable = $type[0] === "?";
         if ($nullable && $value === null) return null;
         if ($nullable) $type = substr($type, 1);
 
